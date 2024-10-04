@@ -247,7 +247,7 @@ class TestReporter {
       case 'vitest-json':
         return new VitestJsonParser(options)
       default:
-        throw new Error(`Input variable 'reporter' is set to invalid value '${reporter}'`)
+        throw new Error(`Input variable 'reporter' is set to invalid value '${reporter}'.`)
     }
   }
 }
