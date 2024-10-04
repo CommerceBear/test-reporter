@@ -32,8 +32,8 @@ export class VitestJsonParser implements TestParser {
 
   private getTestRunResult(resultsPath: string, vitest: VitestJson): TestRunResult {
     const currentDirectory = process.cwd()
-    const groups = vitest.testResults.map(result => {
-      const groupName = result.name.replace(currentDirectory, '')
+    const suites = vitest.testResults.map(result => {
+      const name = result.name.replace(currentDirectory, '')
       const testCases = result.assertionResults.map(assertion => {
         return new TestCaseResult(
           assertion.fullName,
@@ -42,12 +42,12 @@ export class VitestJsonParser implements TestParser {
           testCaseError(assertion)
         )
       })
-      return new TestGroupResult(groupName, testCases)
+      const group = new TestGroupResult(name, testCases)
+      return new TestSuiteResult(name, [group])
     })
 
     const totalDuration = Math.max(...vitest.testResults.map(r => r.endTime), vitest.startTime) - vitest.startTime
-    const suite = new TestSuiteResult('Vitest suite', groups)
-    return new TestRunResult(resultsPath, [suite], totalDuration)
+    return new TestRunResult(resultsPath, suites, totalDuration)
   }
 }
 

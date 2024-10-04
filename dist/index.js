@@ -1657,16 +1657,16 @@ class VitestJsonParser {
     }
     getTestRunResult(resultsPath, vitest) {
         const currentDirectory = process_1.default.cwd();
-        const groups = vitest.testResults.map(result => {
-            const groupName = result.name.replace(currentDirectory, '');
+        const suites = vitest.testResults.map(result => {
+            const name = result.name.replace(currentDirectory, '');
             const testCases = result.assertionResults.map(assertion => {
                 return new test_results_1.TestCaseResult(assertion.fullName, testCaseResult(assertion), assertion.duration ?? 0, testCaseError(assertion));
             });
-            return new test_results_1.TestGroupResult(groupName, testCases);
+            const group = new test_results_1.TestGroupResult(name, testCases);
+            return new test_results_1.TestSuiteResult(name, [group]);
         });
         const totalDuration = Math.max(...vitest.testResults.map(r => r.endTime), vitest.startTime) - vitest.startTime;
-        const suite = new test_results_1.TestSuiteResult('Vitest suite', groups);
-        return new test_results_1.TestRunResult(resultsPath, [suite], totalDuration);
+        return new test_results_1.TestRunResult(resultsPath, suites, totalDuration);
     }
 }
 exports.VitestJsonParser = VitestJsonParser;
