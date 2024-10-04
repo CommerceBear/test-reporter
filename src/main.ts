@@ -21,6 +21,7 @@ import {SwiftXunitParser} from './parsers/swift-xunit/swift-xunit-parser'
 
 import {normalizeDirPath, normalizeFilePath} from './utils/path-utils'
 import {getCheckRunContext} from './utils/github-utils'
+import {VitestJsonParser} from './parsers/vitest-json/vitest-json-parser'
 
 async function main(): Promise<void> {
   try {
@@ -243,6 +244,8 @@ class TestReporter {
         return new RspecJsonParser(options)
       case 'swift-xunit':
         return new SwiftXunitParser(options)
+      case 'vitest-json':
+        return new VitestJsonParser(options)
       default:
         throw new Error(`Input variable 'reporter' is set to invalid value '${reporter}'`)
     }
