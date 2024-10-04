@@ -250,6 +250,7 @@ const rspec_json_parser_1 = __nccwpck_require__(406);
 const swift_xunit_parser_1 = __nccwpck_require__(5366);
 const path_utils_1 = __nccwpck_require__(4070);
 const github_utils_1 = __nccwpck_require__(3522);
+const vitest_json_parser_1 = __nccwpck_require__(2928);
 async function main() {
     try {
         const testReporter = new TestReporter();
@@ -440,8 +441,10 @@ class TestReporter {
                 return new rspec_json_parser_1.RspecJsonParser(options);
             case 'swift-xunit':
                 return new swift_xunit_parser_1.SwiftXunitParser(options);
+            case 'vitest-json':
+                return new vitest_json_parser_1.VitestJsonParser(options);
             default:
-                throw new Error(`Input variable 'reporter' is set to invalid value '${reporter}'`);
+                throw new Error(`Input variable 'reporter' is set to invalid value '${reporter}'.`);
         }
     }
 }
@@ -1616,6 +1619,81 @@ class SwiftXunitParser extends java_junit_parser_1.JavaJunitParser {
     }
 }
 exports.SwiftXunitParser = SwiftXunitParser;
+
+
+/***/ }),
+
+/***/ 2928:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VitestJsonParser = void 0;
+const test_results_1 = __nccwpck_require__(2768);
+const process_1 = __importDefault(__nccwpck_require__(7282));
+class VitestJsonParser {
+    options;
+    assumedWorkDir;
+    constructor(options) {
+        this.options = options;
+    }
+    async parse(path, content) {
+        const vitest = this.getVitestJson(path, content);
+        const result = this.getTestRunResult(path, vitest);
+        result.sort(true);
+        return Promise.resolve(result);
+    }
+    getVitestJson(path, content) {
+        try {
+            return JSON.parse(content);
+        }
+        catch (e) {
+            throw new Error(`Invalid JSON at ${path}\n\n${e}`);
+        }
+    }
+    getTestRunResult(resultsPath, vitest) {
+        const currentDirectory = process_1.default.cwd();
+        const groups = vitest.testResults.map(result => {
+            const groupName = result.name.replace(currentDirectory, '');
+            const testCases = result.assertionResults.map(assertion => {
+                return new test_results_1.TestCaseResult(assertion.fullName, testCaseResult(assertion), assertion.duration ?? 0, testCaseError(assertion));
+            });
+            return new test_results_1.TestGroupResult(groupName, testCases);
+        });
+        const totalDuration = Math.max(...vitest.testResults.map(r => r.endTime), vitest.startTime) - vitest.startTime;
+        const suite = new test_results_1.TestSuiteResult('Vitest suite', groups);
+        return new test_results_1.TestRunResult(resultsPath, [suite], totalDuration);
+    }
+}
+exports.VitestJsonParser = VitestJsonParser;
+function testCaseResult(assertion) {
+    switch (assertion.status) {
+        case 'passed':
+            return 'success';
+        case 'failed':
+            return 'failed';
+        case 'skipped':
+        case 'disabled':
+        case 'todo':
+            return 'skipped';
+        default:
+            return undefined;
+    }
+}
+function testCaseError(assertion) {
+    if (assertion.failureMessages?.length ?? 0 === 0) {
+        return;
+    }
+    return {
+        path: undefined,
+        line: assertion.location?.line,
+        details: assertion.failureMessages?.join('/n') ?? ''
+    };
+}
 
 
 /***/ }),
@@ -59396,6 +59474,14 @@ module.exports = require("path");
 
 "use strict";
 module.exports = require("perf_hooks");
+
+/***/ }),
+
+/***/ 7282:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("process");
 
 /***/ }),
 
