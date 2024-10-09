@@ -67,13 +67,13 @@ function testCaseResult(assertion: VitestAssertionResult): TestExecutionResult {
 }
 
 function testCaseError(assertion: VitestAssertionResult): TestCaseError | undefined {
-  if (assertion.failureMessages?.length ?? 0 === 0) {
+  if (assertion.status !== 'failed') {
     return
   }
 
   return {
     path: undefined,
     line: assertion.location?.line,
-    details: assertion.failureMessages?.join('/n') ?? ''
+    details: assertion.failureMessages?.join('/n') ?? '[No failure message provided]'
   }
 }
