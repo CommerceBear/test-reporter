@@ -11,9 +11,11 @@ import {VitestAssertionResult, VitestJson} from './vitest-json-types'
 import process from 'process'
 
 export class VitestJsonParser implements TestParser {
-  assumedWorkDir: string | undefined
+  workDir: string
 
-  constructor(readonly options: ParseOptions) {}
+  constructor(readonly options: ParseOptions) {
+    this.workDir = options.workDir || process.cwd()
+  }
 
   async parse(path: string, content: string): Promise<TestRunResult> {
     const vitest = this.getVitestJson(path, content)
@@ -31,9 +33,12 @@ export class VitestJsonParser implements TestParser {
   }
 
   private getTestRunResult(resultsPath: string, vitest: VitestJson): TestRunResult {
-    const currentDirectory = process.cwd()
     const suites = vitest.testResults.map(result => {
-      const name = result.name.replace(currentDirectory, '')
+      let name = result.name
+      if (name.startsWith(this.workDir)) {
+        name = name.replace(this.workDir, '.')
+      }
+
       const testCases = result.assertionResults.map(assertion => {
         return new TestCaseResult(
           assertion.fullName,
